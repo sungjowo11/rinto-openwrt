@@ -24,11 +24,19 @@ on:
       openwrt_kernel:
         description: "Select kernel version"
         required: false
-        default: "5.15.y"
+        default: "6.1.y"
         type: choice
         options:
-          - 5.15.y
           - 6.1.y
+          - 6.6.y
+          - 6.12.y
+          - 5.15.y
+          - 5.10.y
+      auto_kernel:
+        description: "Auto use the latest kernel version"
+        required: false
+        default: true
+        type: boolean
           - 6.6.y
       openwrt_ip:
         description: "Set default LAN IP address"
@@ -104,7 +112,7 @@ jobs:
           openwrt_ip: ${{ inputs.openwrt_ip }}
           openwrt_board: ${{ inputs.openwrt_board }}
           openwrt_kernel: ${{ inputs.openwrt_kernel }}
-          auto_kernel: false
+          auto_kernel: ${{ inputs.auto_kernel }}
           kernel_repo: ophub/kernel
           kernel_usage: stable
           builder_name: rinto-openwrt
