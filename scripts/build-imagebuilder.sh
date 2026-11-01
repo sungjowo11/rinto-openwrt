@@ -64,31 +64,62 @@ else
 fi
 
 # 4. Prepare extra custom packages (luci-app-amlogic & luci-app-openclash)
-echo -e "${STEPS} Downloading custom IPK plugins (luci-app-amlogic & luci-app-openclash)..."
+echo -e "${STEPS} Downloading custom plugins (luci-app-amlogic & luci-app-openclash)..."
 mkdir -p packages && cd packages
+
+is_apk=false
+if grep -q "CONFIG_USE_APK=y" ../.config 2>/dev/null; then
+    is_apk=true
+    echo -e "${INFO} Detected APK-based ImageBuilder (OpenWrt/ImmortalWrt 25.12+)."
+else
+    echo -e "${INFO} Detected OPKG-based ImageBuilder (OpenWrt/ImmortalWrt 24.10)."
+fi
 
 # Download luci-app-amlogic (Ophub STB tool)
 amlogic_api="https://api.github.com/repos/ophub/luci-app-amlogic/releases"
 amlogic_tag="$(curl -s ${amlogic_api} | grep -oP '(?<="tag_name": ")[^"]+' | grep "\-js$" | sort -Vur | head -n1 || true)"
 if [[ -n "${amlogic_tag}" ]]; then
     echo -e "${INFO} Latest luci-app-amlogic tag: ${amlogic_tag}"
-    amlogic_urls=$(curl -s ${amlogic_api} | grep "browser_download_url" | grep "${amlogic_tag}" | grep -oE "https://[^\"]+\.ipk" || true)
+    if [ "$is_apk" = true ]; then
+        amlogic_urls=$(curl -s ${amlogic_api} | grep "browser_download_url" | grep "${amlogic_tag}" | grep -oE "https://[^\"]+\.apk" || true)
+    else
+        amlogic_urls=$(curl -s ${amlogic_api} | grep "browser_download_url" | grep "${amlogic_tag}" | grep -oE "https://[^\"]+\.ipk" || true)
+    fi
     for u in ${amlogic_urls}; do
         curl -fsSLO "${u}" || true
     done
 fi
 
-# Download luci-app-openclash latest IPK
+# Download luci-app-openclash
 echo -e "${INFO} Fetching latest luci-app-openclash..."
 openclash_api="https://api.github.com/repos/vernesong/OpenClash/releases"
 openclash_tag="$(curl -s ${openclash_api} | grep -oP '(?<="tag_name": ")[^"]+' | head -n1 || true)"
 if [[ -n "${openclash_tag}" ]]; then
     echo -e "${INFO} Latest OpenClash tag: ${openclash_tag}"
-    openclash_ipk_url=$(curl -s ${openclash_api} | grep "browser_download_url" | grep -E "luci-app-openclash.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)
-    if [[ -n "${openclash_ipk_url}" ]]; then
-        echo -e "${INFO} Downloading OpenClash: ${openclash_ipk_url}"
-        curl -fsSLO "${openclash_ipk_url}" || true
+    if [ "$is_apk" = true ]; then
+        openclash_pkg_url=$(curl -s ${openclash_api} | grep "browser_download_url" | grep -E "luci-app-openclash.*\.apk" | head -n1 | cut -d '"' -f 4 || true)
+    else
+        openclash_pkg_url=$(curl -s ${openclash_api} | grep "browser_download_url" | grep -E "luci-app-openclash.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)
     fi
+    if [[ -n "${openclash_pkg_url}" ]]; then
+        echo -e "${INFO} Downloading OpenClash: ${openclash_pkg_url}"
+        curl -fsSLO "${openclash_pkg_url}" || true
+    fi
+fi
+
+# Clean up and fix APK filenames if on APK-based system
+if [ "$is_apk" = true ]; then
+    rm -f *.ipk 2>/dev/null || true
+    for file in *.apk; do
+        [ -e "$file" ] || continue
+        new_file=$(echo "${file}" | sed -E 's/\.([a-f0-9]{7}\.apk)/~\1/')
+        if [[ "${file}" != "${new_file}" ]]; then
+            mv -f "${file}" "${new_file}" || true
+            echo -e "${INFO} Renamed: ${file} -> ${new_file}"
+        fi
+    done
+else
+    rm -f *.apk 2>/dev/null || true
 fi
 
 cd "${imagebuilder_path}"
