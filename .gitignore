@@ -1,0 +1,10 @@
+# OS and build artifacts
+output/
+imagebuilder/
+tmp/
+*.tar.zst
+*.img
+*.img.gz
+*.iso
+.DS_Store
+Thumbs.db

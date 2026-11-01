@@ -1,0 +1,13 @@
+# Put your custom commands here that should be executed once
+# the system init finished. By default this file does nothing.
+
+# Enable IP forwarding runtime
+sysctl -p /etc/sysctl.d/99-tailscale.conf 2>/dev/null || true
+
+# Start tailscale daemon if installed
+if [ -x /usr/sbin/tailscaled ]; then
+    /etc/init.d/tailscale enable 2>/dev/null || true
+    /etc/init.d/tailscale start 2>/dev/null || true
+fi
+
+exit 0
