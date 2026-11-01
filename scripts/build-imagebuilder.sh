@@ -107,6 +107,19 @@ if [[ -n "${openclash_tag}" ]]; then
     fi
 fi
 
+# Download luci-app-tailscale-community
+echo -e "${INFO} Fetching latest luci-app-tailscale-community..."
+tailscale_api="https://api.github.com/repos/Tokisaki-Galaxy/luci-app-tailscale-community/releases/latest"
+if [ "$is_apk" = true ]; then
+    ts_url=$(curl -s ${tailscale_api} | grep "browser_download_url" | grep -E "luci-app-tailscale-community.*\.apk" | head -n1 | cut -d '"' -f 4 || true)
+else
+    ts_url=$(curl -s ${tailscale_api} | grep "browser_download_url" | grep -E "luci-app-tailscale-community.*\.ipk" | head -n1 | cut -d '"' -f 4 || true)
+fi
+if [[ -n "${ts_url}" ]]; then
+    echo -e "${INFO} Downloading luci-app-tailscale-community: ${ts_url}"
+    curl -fsSLO "${ts_url}" || true
+fi
+
 # Clean up and fix APK filenames if on APK-based system
 if [ "$is_apk" = true ]; then
     rm -f *.ipk 2>/dev/null || true
