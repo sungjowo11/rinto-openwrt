@@ -37,7 +37,6 @@ on:
         required: false
         default: true
         type: boolean
-          - 6.6.y
       openwrt_ip:
         description: "Set default LAN IP address"
         required: false
