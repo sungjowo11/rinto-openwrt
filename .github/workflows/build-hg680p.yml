@@ -6,11 +6,12 @@ on:
       releases_branch:
         description: "Select ImmortalWrt release"
         required: false
-        default: "immortalwrt:24.10.6"
+        default: "immortalwrt:25.12.2"
         type: choice
         options:
-          - immortalwrt:24.10.6
           - immortalwrt:25.12.2
+          - immortalwrt:24.10.6
+          - openwrt:25.12.6
           - openwrt:24.10.8
       openwrt_board:
         description: "Select device board"
